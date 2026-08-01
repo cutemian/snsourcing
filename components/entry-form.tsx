@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { User, Phone, Package, Hash, DollarSign, CreditCard, Calculator, Save, X } from 'lucide-react'
+import { User, Phone, Package, Hash, DollarSign, CreditCard, Calculator, Save, X, Loader2 } from 'lucide-react'
+import { createClient } from '@supabase/supabase-js'
 import type { Transaction } from '@/lib/types'
+
+// Supabase Client Initialisation
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 interface EntryFormProps {
   onSave: (data: Omit<Transaction, 'id' | 'created_at'>) => void
@@ -22,6 +28,7 @@ const emptyForm = {
 
 export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
   const [form, setForm] = useState(emptyForm)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (initialData) {
@@ -49,11 +56,13 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.customer_name.trim() || !form.phone_number.trim() || !form.item_description.trim()) return
     if (qty <= 0 || rate <= 0) return
 
-    onSave({
+    setLoading(true)
+
+    const payload = {
       customer_name: form.customer_name.trim(),
       phone_number: form.phone_number.trim(),
       item_description: form.item_description.trim(),
@@ -61,8 +70,35 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
       rate: rate,
       total_bill: totalBill,
       amount_paid: paid,
-      remaining_balance: remaining,
-    })
+    }
+
+    try {
+      if (initialData?.id) {
+        // Update Existing Record in Supabase
+        const { error } = await supabase
+          .from('transactions')
+          .update(payload)
+          .eq('id', initialData.id)
+
+        if (error) console.error('Supabase Update Error:', error)
+      } else {
+        // Insert New Record into Supabase
+        const { error } = await supabase
+          .from('transactions')
+          .insert([payload])
+
+        if (error) console.error('Supabase Insert Error:', error)
+      }
+    } catch (err) {
+      console.error('Database connection failed:', err)
+    } finally {
+      setLoading(false)
+      // Local state sync callback
+      onSave({
+        ...payload,
+        remaining_balance: remaining,
+      })
+    }
   }
 
   const fields = [
@@ -142,18 +178,19 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
       <div className="flex items-center gap-3 p-5">
         <button
           onClick={onCancel}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all btn-metal"
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all btn-metal disabled:opacity-50"
         >
           <X size={15} />
           Cancel
         </button>
         <button
           onClick={handleSubmit}
-          disabled={!isValid}
+          disabled={!isValid || loading}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all btn-emerald disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <Save size={15} />
-          {initialData ? 'Save Changes' : 'Save Entry'}
+          {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+          {loading ? 'Saving...' : initialData ? 'Save Changes' : 'Save Entry'}
         </button>
       </div>
     </motion.div>
