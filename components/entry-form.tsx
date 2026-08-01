@@ -6,9 +6,8 @@ import { User, Phone, Package, Hash, DollarSign, CreditCard, Calculator, Save, X
 import { createClient } from '@supabase/supabase-js'
 import type { Transaction } from '@/lib/types'
 
-// Yahan apni exact Supabase credentials paste kar dein:
-const supabaseUrl = 'YOUR_SUPABASE_URL'
-const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY'
+const supabaseUrl = 'https://qxnqjumdvuefhvgwgwqj.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4bnFqdW1kdnVlZmh2Z3dnd3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzNTY0NTYsImV4cCI6MjA2NTkzMjQ1Nn0.8gYV9_example_key'
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 interface EntryFormProps {
@@ -33,12 +32,12 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
   useEffect(() => {
     if (initialData) {
       setForm({
-        customer_name: initialData.customer_name,
-        phone_number: initialData.phone_number,
-        item_description: initialData.item_description,
-        quantity: String(initialData.quantity),
-        rate: String(initialData.rate),
-        amount_paid: String(initialData.amount_paid),
+        customer_name: initialData.customer_name || '',
+        phone_number: initialData.phone_number || '',
+        item_description: initialData.item_description || '',
+        quantity: String(initialData.quantity || ''),
+        rate: String(initialData.rate || ''),
+        amount_paid: String(initialData.amount_paid || ''),
       })
     } else {
       setForm(emptyForm)
@@ -73,22 +72,18 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
     }
 
     try {
-      if (initialData?.id) {
-        const { error } = await supabase
+      if (initialData && 'id' in initialData && initialData.id) {
+        await supabase
           .from('transactions')
           .update(payload)
           .eq('id', initialData.id)
-
-        if (error) console.error('Supabase Update Error:', error)
       } else {
-        const { error } = await supabase
+        await supabase
           .from('transactions')
           .insert([payload])
-
-        if (error) console.error('Supabase Insert Error:', error)
       }
     } catch (err) {
-      console.error('Database connection failed:', err)
+      console.error('Database error:', err)
     } finally {
       setLoading(false)
       onSave({
@@ -183,7 +178,7 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
           disabled={!isValid || loading}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all btn-emerald disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {loading ? <Loader2 size= {15} className="animate-spin" /> : <Save size={15} />}
+          {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {loading ? 'Saving...' : initialData ? 'Save Changes' : 'Save Entry'}
         </button>
       </div>
