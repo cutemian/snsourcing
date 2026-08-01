@@ -6,9 +6,9 @@ import { User, Phone, Package, Hash, DollarSign, CreditCard, Calculator, Save, X
 import { createClient } from '@supabase/supabase-js'
 import type { Transaction } from '@/lib/types'
 
-// Supabase Client Initialisation
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+// Yahan apni exact Supabase credentials paste kar dein:
+const supabaseUrl = 'YOUR_SUPABASE_URL'
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY'
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 interface EntryFormProps {
@@ -74,7 +74,6 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
 
     try {
       if (initialData?.id) {
-        // Update Existing Record in Supabase
         const { error } = await supabase
           .from('transactions')
           .update(payload)
@@ -82,7 +81,6 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
 
         if (error) console.error('Supabase Update Error:', error)
       } else {
-        // Insert New Record into Supabase
         const { error } = await supabase
           .from('transactions')
           .insert([payload])
@@ -93,7 +91,6 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
       console.error('Database connection failed:', err)
     } finally {
       setLoading(false)
-      // Local state sync callback
       onSave({
         ...payload,
         remaining_balance: remaining,
@@ -120,7 +117,6 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
       transition={{ duration: 0.25 }}
       className="industrial-card rounded-2xl overflow-hidden"
     >
-      {/* Top accent */}
       <div className="h-[3px] w-full" style={{ background: 'linear-gradient(90deg, transparent, oklch(0.72 0.17 160), transparent)' }} />
 
       <div className="p-5 pb-0">
@@ -150,7 +146,6 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
         </div>
       </div>
 
-      {/* Auto-calculated results */}
       <div className="mx-5 mt-4 rounded-xl p-4" style={{ background: 'oklch(0.14 0.012 240)', border: '1px solid oklch(0.25 0.015 240)' }}>
         <div className="flex items-center gap-2 mb-3">
           <Calculator size={14} style={{ color: 'oklch(0.55 0.01 240)' }} />
@@ -174,7 +169,6 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
         </div>
       </div>
 
-      {/* Action buttons */}
       <div className="flex items-center gap-3 p-5">
         <button
           onClick={onCancel}
@@ -189,7 +183,7 @@ export function EntryForm({ onSave, onCancel, initialData }: EntryFormProps) {
           disabled={!isValid || loading}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all btn-emerald disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+          {loading ? <Loader2 size= {15} className="animate-spin" /> : <Save size={15} />}
           {loading ? 'Saving...' : initialData ? 'Save Changes' : 'Save Entry'}
         </button>
       </div>
